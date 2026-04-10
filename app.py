@@ -1,3 +1,18 @@
+import os
+import gdown
+
+# Auto-download dataset if missing
+DATA_URL = "https://drive.google.com/uc?id=1POdXbR2vL7Gz8VqQqJqKqJqKqJqKqJqK"  # Upload your CSV to Google Drive first
+
+if not os.path.exists('data/creditcard.csv'):
+    os.makedirs('data', exist_ok=True)
+    try:
+        import gdown
+        gdown.download(DATA_URL, 'data/creditcard.csv', quiet=False)
+    except:
+        st.warning("⚠️ Please manually place creditcard.csv in data/ folder")
+
+
 import streamlit as st
 import pandas as pd
 import numpy as np
