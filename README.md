@@ -16,6 +16,11 @@ Python, Streamlit, Scikit-Learn, SHAP
 3. `python train_model.py`
 4. `streamlit run app.py`
 
+## 📥 Dataset Setup
+1. Download `creditcard.csv` from [Kaggle](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud)
+2. Create folder: `data/`
+3. Place file: `data/creditcard.csv`
+4. Run: `python train_model.py` then `streamlit run app.py`
 
 _**1. Overview**_
 
