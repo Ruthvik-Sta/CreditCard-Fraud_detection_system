@@ -1,28 +1,21 @@
-import os
-import gdown
-
-# Auto-download dataset if missing
-DATA_URL = "https://drive.google.com/uc?id=1POdXbR2vL7Gz8VqQqJqKqJqKqJqKqJqK"  # Upload your CSV to Google Drive first
-
-if not os.path.exists('data/creditcard.csv'):
-    os.makedirs('data', exist_ok=True)
-    try:
-        import gdown
-        gdown.download(DATA_URL, 'data/creditcard.csv', quiet=False)
-    except:
-        st.warning("⚠️ Please manually place creditcard.csv in data/ folder")
-
-
 import streamlit as st
 import pandas as pd
 import numpy as np
 import joblib
 import shap
 import matplotlib.pyplot as plt
+import os
 
 st.set_page_config(page_title="Fraud Detection AI", layout="wide")
 st.title("🛡️ Credit Card Fraud Detection & Monitoring System")
 st.markdown("### Powered by Machine Learning & Explainable AI")
+
+# Check if dataset exists
+if not os.path.exists('data/creditcard.csv'):
+    st.error("❌ Dataset not found!")
+    st.info("**For Local Demo:** Please ensure `data/creditcard.csv` exists in your project folder.")
+    st.info("**For Streamlit Cloud:** This app requires the dataset to be present locally. Please run this project on your local machine for full functionality.")
+    st.stop()
 
 @st.cache_resource
 def load_model():
@@ -85,26 +78,19 @@ elif option == "Batch Analysis & XAI":
         X_explain = fraud_cases.drop('Class', axis=1).reset_index(drop=True)
         X_explain_scaled = scaler.transform(X_explain)
         
-        # Get SHAP values
         explainer = shap.TreeExplainer(model)
         shap_values = explainer.shap_values(X_explain_scaled)
         
-        # Handle SHAP output format
         if isinstance(shap_values, list):
             shap_vals = shap_values[1]
         else:
             shap_vals = shap_values
         
-        # Ensure shap_vals is 2D (n_samples, n_features)
-        if shap_vals.ndim == 3:
-            shap_vals = shap_vals[:, :, 1]  # Take positive class for binary classification
-        
         st.success("✅ SHAP Analysis Complete")
         
-        # === PLOT 1: Feature Importance ===
+        # Plot 1: Feature Importance
         st.markdown("#### 1. Global Feature Importance")
         mean_abs_shap = np.abs(shap_vals).mean(axis=0)
-        mean_abs_shap = np.array(mean_abs_shap).flatten()  # Ensure 1D
         top_features = pd.DataFrame({
             'Feature': X_explain.columns,
             'Importance': mean_abs_shap
@@ -120,15 +106,13 @@ elif option == "Batch Analysis & XAI":
         st.pyplot(fig1)
         plt.close(fig1)
         
-        # === PLOT 2: SHAP Values for First Transaction ===
+        # Plot 2: SHAP Values for First Transaction
         st.markdown("#### 2. Why was this transaction flagged?")
         st.caption("Red = pushes toward FRAUD, Blue = pushes toward LEGIT")
         
-        # Get first transaction data
         shap_row = shap_vals[0]
         feature_row = X_explain.iloc[0].values
         
-        # Create DataFrame
         shap_df = pd.DataFrame({
             'Feature': X_explain.columns,
             'SHAP_Value': shap_row,
@@ -137,7 +121,6 @@ elif option == "Batch Analysis & XAI":
         shap_df['Abs_SHAP'] = np.abs(shap_df['SHAP_Value'])
         shap_df = shap_df.sort_values('Abs_SHAP', ascending=False).head(10)
         
-        # Create bar chart
         fig2, ax2 = plt.subplots(figsize=(10, 5))
         colors = ['red' if v > 0 else 'blue' for v in shap_df['SHAP_Value']]
         ax2.barh(shap_df['Feature'], shap_df['SHAP_Value'], color=colors, alpha=0.7)
@@ -148,7 +131,6 @@ elif option == "Batch Analysis & XAI":
         st.pyplot(fig2)
         plt.close(fig2)
         
-        # Show table
         st.markdown("**Detailed Feature Analysis:**")
         display_df = shap_df[['Feature', 'Feature_Value', 'SHAP_Value']].copy()
         st.dataframe(display_df.style.format({
